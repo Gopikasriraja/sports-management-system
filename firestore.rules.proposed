@@ -1,0 +1,121 @@
+// PROPOSAL ONLY: this file is not referenced by firebase.json and has not
+// been validated with the Firebase Emulator Suite. Do not deploy as-is.
+//
+// Deliberately fail-closed where the current client schema cannot prove
+// ownership, roster privacy, deterministic attendance IDs, or audit coupling.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function studentPath(studentId) {
+      return /databases/$(database)/documents/students/$(studentId);
+    }
+
+    function activeActor() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.get('status', '') in ['active', 'Active'];
+    }
+
+    function hasRole(roles) {
+      return activeActor()
+        && get(userPath(request.auth.uid)).data.get('role', '') in roles;
+    }
+
+    function broadAttendanceManager() {
+      return hasRole(['Admin', 'Manager']);
+    }
+
+    function linkedStudent(studentId) {
+      return activeActor()
+        && exists(studentPath(studentId))
+        && get(userPath(request.auth.uid)).data.get('role', '') == 'Student'
+        && get(userPath(request.auth.uid)).data.get('registerNumberNormalized', '') != ''
+        && get(userPath(request.auth.uid)).data.get('registerNumberNormalized', '')
+          == get(studentPath(studentId)).data.get('registerNumberNormalized', '')
+        && get(userPath(request.auth.uid)).data.get('email', '')
+          == get(studentPath(studentId)).data.get('email', '');
+    }
+
+    function ownsSession(session) {
+      return broadAttendanceManager()
+        || (hasRole(['Sports Staff'])
+          && session.get('responsibleUid', '') == request.auth.uid);
+    }
+
+    function sessionPath(sessionId) {
+      return /databases/$(database)/documents/attendance_sessions/$(sessionId);
+    }
+
+    function canAccessSession(sessionId) {
+      return exists(sessionPath(sessionId))
+        && ownsSession(get(sessionPath(sessionId)).data);
+    }
+
+    match /users/{uid} {
+      allow get: if activeActor()
+        && (request.auth.uid == uid || broadAttendanceManager());
+      allow list: if broadAttendanceManager();
+
+      allow create, update, delete: if false;
+    }
+
+    match /students/{studentId} {
+      // Student documents contain private profile fields. Read/write via
+      // reviewed callable DTOs until the schema is split into safe projections.
+      allow get, list, create, update, delete: if false;
+    }
+
+    match /attendance_sessions/{sessionId} {
+      allow get, list: if ownsSession(resource.data);
+      allow create, update, delete: if false;
+    }
+
+    match /attendance/{attendanceId} {
+      allow get, list: if broadAttendanceManager()
+        || (hasRole(['Sports Staff'])
+          && canAccessSession(resource.data.get('sessionId', '')))
+        || linkedStudent(resource.data.get('studentId', ''));
+
+      // Current client writes use a base64url ID that rules cannot derive,
+      // and corrections do not include an audit-event ID on the attendance
+      // document. Route these writes through a trusted backend until those
+      // invariants can be represented and tested in rules.
+      allow create, update, delete: if false;
+    }
+
+    match /attendance_audit/{auditId} {
+      allow get, list: if broadAttendanceManager()
+        || (hasRole(['Sports Staff'])
+          && canAccessSession(resource.data.get('sessionId', '')));
+      // Append-only audit creation must be coupled to the attendance
+      // correction by a trusted transaction/backend operation.
+      allow create, update, delete: if false;
+    }
+
+    match /sports_teams/{teamId} {
+      allow get, list: if hasRole(['Admin', 'Manager', 'Sports Staff'])
+        || (activeActor()
+          && get(userPath(request.auth.uid)).data.get('role', '') == 'Student'
+          && resource.data.get('status', '') in ['active', 'Active']);
+      allow create, update, delete: if false;
+    }
+
+    match /team_memberships/{membershipId} {
+      allow get, list: if broadAttendanceManager()
+        || linkedStudent(resource.data.get('studentId', ''));
+      allow create, update, delete: if false;
+    }
+
+    // No other collection is authorized by this proposal. Review all
+    // application collections before using any ruleset in a deployment.
+  }
+}

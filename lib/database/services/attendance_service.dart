@@ -1,0 +1,427 @@
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+
+import '../../core/constants/app_roles.dart';
+import '../../core/validation/attendance_rules.dart';
+import '../../models/attendance_model.dart';
+import '../../models/attendance_session_model.dart';
+import '../../models/student_model.dart';
+import 'firestore_authorization.dart';
+
+class AttendanceService {
+  final FirebaseFirestore? _firestore;
+
+  AttendanceService({FirebaseFirestore? db}) : _firestore = db;
+
+  FirebaseFirestore get db => _firestore ?? FirebaseFirestore.instance;
+
+  CollectionReference<Map<String, dynamic>> get _sessions =>
+      db.collection('attendance_sessions');
+
+  CollectionReference<Map<String, dynamic>> get _attendance =>
+      db.collection('attendance');
+
+  Future<String> createSession(
+    AttendanceSessionModel session, {
+    required String actorUid,
+    required String actorRole,
+    required String actorName,
+  }) async {
+    await _requireAttendanceManager(actorUid, actorRole);
+
+    final created = session.copyWith(
+      sessionId: '',
+      responsibleUid: actorUid,
+      responsibleName: actorName,
+      status: 'scheduled',
+    );
+
+    final error = AttendanceRules.validateSession(created);
+    if (error != null) throw ArgumentError(error);
+
+    final callable = FirebaseFunctions.instance.httpsCallable(
+      'createAttendanceSession',
+    );
+
+    final result = await callable.call(<String, dynamic>{
+      'title': created.title.trim(),
+      'sport': created.sport.trim(),
+      'venue': created.venue.trim(),
+      'startTime': created.startTime.trim(),
+      'endTime': created.endTime.trim(),
+      'teamId': created.teamId,
+      'dateMillis': created.date.millisecondsSinceEpoch,
+    });
+
+    final data = Map<String, dynamic>.from(result.data as Map);
+    final sessionId = data['sessionId'];
+
+    if (sessionId is! String || sessionId.isEmpty) {
+      throw StateError('Server did not return a valid session ID.');
+    }
+
+    return sessionId;
+  }
+
+  Future<void> updateSession(
+    AttendanceSessionModel session, {
+    required String actorUid,
+    required String actorRole,
+  }) async {
+    await _requireAttendanceManager(actorUid, actorRole);
+    if (session.sessionId.isEmpty) {
+      throw ArgumentError('An existing session ID is required.');
+    }
+    final reference = _sessions.doc(session.sessionId);
+    await db.runTransaction((transaction) async {
+      final currentSnapshot = await transaction.get(reference);
+      if (!currentSnapshot.exists) {
+        throw StateError('Attendance session not found.');
+      }
+      final current = AttendanceSessionModel.fromFirestore(currentSnapshot);
+      _requireSessionAccess(current, actorUid, actorRole);
+      if (current.status != 'scheduled') {
+        throw StateError('Only scheduled sessions can be edited.');
+      }
+      final updated = session.copyWith(
+        status: current.status,
+        responsibleUid: current.responsibleUid,
+        responsibleName: current.responsibleName,
+        createdAt: current.createdAt,
+        updatedAt: DateTime.now(),
+      );
+      final validationError = AttendanceRules.validateSession(updated);
+      if (validationError != null) throw ArgumentError(validationError);
+      await _validateTeamInTransaction(transaction, updated);
+      transaction.update(reference, {
+        'title': updated.title.trim(),
+        'sport': updated.sport.trim(),
+        'teamId': updated.teamId,
+        'teamName': updated.teamName.trim(),
+        'date': Timestamp.fromDate(updated.date),
+        'startTime': updated.startTime.trim(),
+        'endTime': updated.endTime.trim(),
+        'venue': updated.venue.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> updateSessionStatus(
+    String sessionId,
+    String status, {
+    required String actorUid,
+    required String actorRole,
+  }) async {
+    await _requireAttendanceManager(actorUid, actorRole);
+    if (!AttendanceRules.sessionStatuses.contains(status)) {
+      throw ArgumentError('Choose a valid session status.');
+    }
+    final reference = _sessions.doc(sessionId);
+    await db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(reference);
+      if (!snapshot.exists) throw StateError('Attendance session not found.');
+      final session = AttendanceSessionModel.fromFirestore(snapshot);
+      _requireSessionAccess(session, actorUid, actorRole);
+      if (!AttendanceRules.canTransitionSession(session.status, status)) {
+        throw StateError(
+          'A ${session.status} session cannot be changed to $status.',
+        );
+      }
+      transaction.update(reference, {
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Stream<List<AttendanceSessionModel>> streamSessions({
+    required String actorUid,
+    required String actorRole,
+  }) async* {
+    await _requireAttendanceManager(actorUid, actorRole);
+    Query<Map<String, dynamic>> query = _sessions;
+    if (actorRole == AppRoles.sportsStaff) {
+      query = query.where('responsibleUid', isEqualTo: actorUid);
+    }
+    yield* query
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(AttendanceSessionModel.fromFirestore)
+              .toList(),
+        );
+  }
+
+  Future<List<StudentModel>> getEligibleStudents(
+    String sessionId, {
+    required String actorUid,
+    required String actorRole,
+  }) async {
+    await _requireAttendanceManager(actorUid, actorRole);
+    final session = await _getAuthorizedSession(
+      sessionId,
+      actorUid,
+      actorRole,
+    );
+    final students = db.collection('students');
+    if (session.teamId.isEmpty) {
+      final snapshot = await students.get();
+      return snapshot.docs
+          .map(StudentModel.fromFirestore)
+          .where((student) => student.status.toLowerCase() == 'active')
+          .toList()
+        ..sort((first, second) => first.name.compareTo(second.name));
+    }
+    final memberships = await db
+        .collection('team_memberships')
+        .where('teamId', isEqualTo: session.teamId)
+        .get();
+    final ids = memberships.docs
+        .map((document) => document.data()['studentId'] as String?)
+        .whereType<String>()
+        .toSet();
+    if (ids.isEmpty) return [];
+    final documents = await Future.wait(ids.map((id) => students.doc(id).get()));
+    return documents
+        .where((document) => document.exists)
+        .map(StudentModel.fromFirestore)
+        .where((student) => student.status.toLowerCase() == 'active')
+        .toList()
+      ..sort((first, second) => first.name.compareTo(second.name));
+  }
+
+  Stream<List<AttendanceModel>> streamSessionAttendance(
+    String sessionId, {
+    required String actorUid,
+    required String actorRole,
+  }) async* {
+    await _requireAttendanceManager(actorUid, actorRole);
+    await _getAuthorizedSession(sessionId, actorUid, actorRole);
+    yield* _attendance
+        .where('sessionId', isEqualTo: sessionId)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(AttendanceModel.fromFirestore)
+              .toList(),
+        );
+  }
+
+  Future<void> markAttendance({
+    required String sessionId,
+    required StudentModel student,
+    required String status,
+    required String actorUid,
+    required String actorRole,
+    String correctionReason = '',
+  }) async {
+    await _requireAttendanceManager(actorUid, actorRole);
+    final statusError = AttendanceRules.validateStatus(status);
+    if (statusError != null) throw ArgumentError(statusError);
+    final sessionRef = _sessions.doc(sessionId);
+    final studentRef = db.collection('students').doc(student.studentId);
+    final recordId = attendanceDocumentId(sessionId, student.studentId);
+    final recordRef = _attendance.doc(recordId);
+    final auditRef = db.collection('attendance_audit').doc();
+
+    await db.runTransaction((transaction) async {
+      final sessionSnapshot = await transaction.get(sessionRef);
+      final studentSnapshot = await transaction.get(studentRef);
+      final existing = await transaction.get(recordRef);
+      if (!sessionSnapshot.exists) {
+        throw StateError('Attendance session not found.');
+      }
+      final session = AttendanceSessionModel.fromFirestore(sessionSnapshot);
+      _requireSessionAccess(session, actorUid, actorRole);
+      if (session.status != 'active') {
+        throw StateError('Attendance can only be marked for an active session.');
+      }
+      if (!studentSnapshot.exists ||
+          (studentSnapshot.data()?['status'] as String? ?? 'active')
+                  .toLowerCase() !=
+              'active') {
+        throw StateError('Only active students are eligible for attendance.');
+      }
+      if (session.teamId.isNotEmpty) {
+        final membership = await transaction.get(
+          db
+              .collection('team_memberships')
+              .doc('${session.teamId}--${student.studentId}'),
+        );
+        if (!membership.exists ||
+            membership.data()?['teamId'] != session.teamId ||
+            membership.data()?['studentId'] != student.studentId) {
+          throw StateError('This student is not on the selected team roster.');
+        }
+      }
+      final previous = existing.data();
+      final previousStatus = previous?['status'] as String?;
+      if (existing.exists && previousStatus == status) return;
+      final recordChangeError = AttendanceRules.validateRecordChange(
+        alreadyExists: existing.exists,
+        previousStatus: previousStatus,
+        newStatus: status,
+        correctionReason: correctionReason,
+      );
+      if (recordChangeError.isNotEmpty) {
+        throw ArgumentError(recordChangeError);
+      }
+      final now = FieldValue.serverTimestamp();
+      final studentData = studentSnapshot.data()!;
+      if (existing.exists) {
+        transaction.update(recordRef, {
+          'status': status,
+          'updatedBy': actorUid,
+          'updatedAt': now,
+          'correctionReason': correctionReason.trim(),
+        });
+        transaction.set(auditRef, {
+          'sessionId': sessionId,
+          'studentId': student.studentId,
+          'previousStatus': previousStatus,
+          'newStatus': status,
+          'correctedBy': actorUid,
+          'correctionReason': correctionReason.trim(),
+          'changedAt': now,
+        });
+      } else {
+        transaction.set(recordRef, {
+          'attendanceId': recordId,
+          'sessionId': sessionId,
+          'studentId': student.studentId,
+          'studentName': studentData['name'] as String? ?? '',
+          'registerNumber': studentData['registerNumber'] as String? ?? '',
+          'department': studentData['department'] as String? ?? '',
+          'sport': session.sport,
+          'date': Timestamp.fromDate(session.date),
+          'status': status,
+          'markedBy': actorUid,
+          'createdAt': now,
+          'updatedBy': actorUid,
+          'updatedAt': now,
+          'correctionReason': '',
+        });
+      }
+    });
+  }
+
+  Future<List<AttendanceModel>> getAttendanceForStudent(
+    String studentId, {
+    required String actorUid,
+    required String actorRole,
+  }) async {
+    await FirestoreAuthorization.requireActiveActor(
+      db: db,
+      actorUid: actorUid,
+      actorRole: actorRole,
+    );
+    var selfAccess = actorRole == AppRoles.student && actorUid == studentId;
+    if (actorRole == AppRoles.student && !selfAccess) {
+      final actor = await db.collection('users').doc(actorUid).get();
+      final target = await db.collection('students').doc(studentId).get();
+      final actorData = actor.data();
+      final targetData = target.data();
+      final actorRegister = (actorData?['registerNumber'] as String? ?? '')
+          .trim()
+          .toLowerCase();
+      final targetRegister = (targetData?['registerNumber'] as String? ?? '')
+          .trim()
+          .toLowerCase();
+      selfAccess = actorRegister.isNotEmpty &&
+          actorRegister == targetRegister &&
+          (actorData?['email'] as String? ?? '').toLowerCase() ==
+              (targetData?['email'] as String? ?? '').toLowerCase();
+    }
+    if (!selfAccess && !AppRoles.canManageAttendance(actorRole)) {
+      throw StateError('You are not authorized to view this attendance history.');
+    }
+    if (actorRole == AppRoles.sportsStaff) {
+      final ownedSessions = await _sessions
+          .where('responsibleUid', isEqualTo: actorUid)
+          .get();
+      final reads = await Future.wait(
+        ownedSessions.docs.map(
+          (session) => _attendance
+              .where('sessionId', isEqualTo: session.id)
+              .where('studentId', isEqualTo: studentId)
+              .get(),
+        ),
+      );
+      return reads
+          .expand((result) => result.docs)
+          .map(AttendanceModel.fromFirestore)
+          .toList()
+        ..sort((first, second) => second.date.compareTo(first.date));
+    }
+    final snapshot = await _attendance
+        .where('studentId', isEqualTo: studentId)
+        .orderBy('date', descending: true)
+        .get();
+    return snapshot.docs.map(AttendanceModel.fromFirestore).toList();
+  }
+
+  static String attendanceDocumentId(String sessionId, String studentId) =>
+      AttendanceRules.attendanceDocumentId(sessionId, studentId);
+
+  Future<AttendanceSessionModel> _getAuthorizedSession(
+    String sessionId,
+    String actorUid,
+    String actorRole,
+  ) async {
+    final snapshot = await _sessions.doc(sessionId).get();
+    if (!snapshot.exists) throw StateError('Attendance session not found.');
+    final session = AttendanceSessionModel.fromFirestore(snapshot);
+    _requireSessionAccess(session, actorUid, actorRole);
+    return session;
+  }
+
+  void _requireSessionAccess(
+    AttendanceSessionModel session,
+    String actorUid,
+    String actorRole,
+  ) {
+    if (!AttendanceRules.canManageSession(
+      actorUid: actorUid,
+      actorRole: actorRole,
+      responsibleUid: session.responsibleUid,
+    )) {
+      throw StateError('You are not assigned to manage this session.');
+    }
+  }
+
+  Future<void> _requireAttendanceManager(
+    String actorUid,
+    String actorRole,
+  ) async {
+    await FirestoreAuthorization.requireActiveActor(
+      db: db,
+      actorUid: actorUid,
+      actorRole: actorRole,
+    );
+    if (!AppRoles.canManageAttendance(actorRole)) {
+      throw StateError('You are not authorized to manage attendance.');
+    }
+  }
+
+  Future<void> _validateTeamInTransaction(
+    Transaction transaction,
+    AttendanceSessionModel session,
+  ) async {
+    if (session.teamId.isEmpty) return;
+    final team = await transaction.get(
+      db.collection('sports_teams').doc(session.teamId),
+    );
+    if (!team.exists ||
+        (team.data()?['status'] as String? ?? 'active').toLowerCase() !=
+            'active') {
+      throw StateError('Select an existing active team.');
+    }
+    final teamSport = team.data()?['sport'] as String? ?? '';
+    if (teamSport.trim().toLowerCase() != session.sport.trim().toLowerCase()) {
+      throw ArgumentError('The session sport must match the selected team.');
+    }
+  }
+}
+

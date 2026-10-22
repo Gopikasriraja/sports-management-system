@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "912101558323",
+    "project_id": "sportsmanagement-58201",
+    "storage_bucket": "sportsmanagement-58201.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:912101558323:android:96ebb9a84dd3625a473b46",
+        "android_client_info": {
+          "package_name": "com.mrcas.sportsmanagementsystem"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "912101558323-it184o050r0bfb9ssah9eflrieas2831.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMfaawVl8qbci7cqW0KA9HnY6OVDX1rNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "912101558323-it184o050r0bfb9ssah9eflrieas2831.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:912101558323:android:00cd5b118de014ae473b46",
+        "android_client_info": {
+          "package_name": "com.mrcas.sportsmanagementsystems"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "912101558323-it184o050r0bfb9ssah9eflrieas2831.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMfaawVl8qbci7cqW0KA9HnY6OVDX1rNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "912101558323-it184o050r0bfb9ssah9eflrieas2831.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
