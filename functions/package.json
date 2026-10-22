@@ -1,16 +1,14 @@
-{
+﻿{
   "name": "sports-management-functions",
   "private": true,
   "main": "index.js",
-  "engines": {
-    "node": "22"
-  },
-  "scripts": {
-    "test": "node --test"
-  },
+  "engines": { "node": "22" },
+  "scripts": { "start": "node server.js", "test": "node --test" },
   "dependencies": {
     "@google-cloud/vertexai": "^1.10.0",
     "firebase-admin": "^13.0.2",
-    "firebase-functions": "^6.3.2"
+    "firebase-functions": "^6.3.2",
+    "express": "^5.1.0",
+    "cors": "^2.8.5"
   }
 }
