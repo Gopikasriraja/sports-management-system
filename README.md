@@ -15,3 +15,16 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Training schedule
+
+Admins, managers, and sports staff can create, update, and delete training
+sessions from the operations portal. Students can view the schedule from their
+portal. Sessions are stored in Firestore's `training_sessions` collection and
+include the sport, optional team, coach, venue, start and end times, notes, and
+status.
+
+Before deploying this feature, ensure the active Firestore rules authorize
+schedule reads for students and operations roles and restrict writes to
+authorized operations roles. The `firestore.rules.proposed` file is not active
+and does not yet define rules for this collection.

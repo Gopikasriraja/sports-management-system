@@ -17,6 +17,7 @@ import 'widgets/equipment_availability.dart';
 import 'widgets/attendance_history.dart';
 import 'widgets/media_gallery.dart';
 import 'widgets/department_contact.dart';
+import 'widgets/training_schedule_view.dart';
 import '../teams/team_management_screen.dart';
 
 class UserDashboardScreen extends StatefulWidget {
@@ -122,6 +123,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           return const ProfileView();
         case 'Sports Calendar':
           return const SportsCalendar();
+        case 'Training Schedule':
+          return const TrainingScheduleView();
         case 'Sports Teams':
           return const TeamManagementScreen();
         case 'Achievements':

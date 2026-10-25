@@ -97,6 +97,11 @@ class UserSidebar extends StatelessWidget {
                 _buildMenuItem(context, 'Dashboard', Icons.dashboard_rounded),
                 _buildMenuItem(context, 'My Profile', Icons.person_rounded),
                 _buildMenuItem(context, 'Sports Calendar', Icons.calendar_month_rounded),
+                _buildMenuItem(
+                  context,
+                  'Training Schedule',
+                  Icons.fitness_center_rounded,
+                ),
                 _buildMenuItem(context, 'Sports Teams', Icons.groups_rounded),
                 _buildMenuItem(context, 'Achievements', Icons.emoji_events_rounded),
                 _buildMenuItem(context, 'Equipment Availability', Icons.inventory_2_rounded),

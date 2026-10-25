@@ -33,6 +33,9 @@ class AppRoles {
   static bool canManageEvents(String? role) =>
       role == admin || role == manager || role == sportsStaff;
 
+  static bool canManageTrainingSessions(String? role) =>
+      canManageEvents(role);
+
   static bool canManageGallery(String? role) =>
       role == admin || role == manager || role == sportsStaff;
 
@@ -64,6 +67,8 @@ class AppRoles {
       'Sports Equipment' => canManageEquipmentLoans(role),
       'Achievements' => role == admin || canAccessOperationsPortal(role),
       'Sports Calendar' => canManageEvents(role),
+      'Training Schedule' =>
+        role == student || canManageTrainingSessions(role),
       'Gallery' => canManageGallery(role),
       'Reports' => canViewReports(role),
       'Notifications' => canManageAnnouncements(role),

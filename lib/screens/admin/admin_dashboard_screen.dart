@@ -20,6 +20,7 @@ import 'widgets/gallery_management_view.dart';
 import 'widgets/attendance_management_view.dart';
 import 'widgets/report_management_view.dart';
 import 'widgets/notification_management_view.dart';
+import '../user/widgets/training_schedule_view.dart';
 import '../teams/team_management_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -237,6 +238,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return const Padding(
           padding: EdgeInsets.all(24.0),
           child: EventManagementView(),
+        );
+      }
+      if (_activeTab == 'Training Schedule') {
+        return const SingleChildScrollView(
+          padding: EdgeInsets.all(24),
+          child: TrainingScheduleView(readOnly: false),
         );
       }
       if (_activeTab == 'Gallery') {

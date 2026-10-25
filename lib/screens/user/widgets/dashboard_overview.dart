@@ -31,6 +31,12 @@ class DashboardOverview extends StatelessWidget {
         tab: 'Sports Calendar',
       ),
       _DashboardDestination(
+        title: 'Training Schedule',
+        description: 'View upcoming team training sessions.',
+        icon: Icons.fitness_center_outlined,
+        tab: 'Training Schedule',
+      ),
+      _DashboardDestination(
         title: 'Sports Teams',
         description: 'Browse teams and view your memberships.',
         icon: Icons.groups_outlined,

@@ -107,14 +107,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (success) {
       // Navigate to email verification screen
-      context.go('/auth/verify-email', extra: {
-        'email': _emailCtrl.text.trim(),
-        'password': _passwordCtrl.text,
-      });
+      context.go(
+        '/auth/verify-email',
+        extra: {
+          'email': _emailCtrl.text.trim(),
+          'password': _passwordCtrl.text,
+        },
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Registration failed. Please try again.'),
+          content: Text(
+            authProvider.errorMessage ??
+                'Registration failed. Please try again.',
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -127,10 +133,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
 
-    final Color primary = isDark ? AppColors.primaryDark : AppColors.primaryLight;
-    final Color secondary = isDark ? AppColors.secondaryDark : AppColors.secondaryLight;
-    final Color onBg = isDark ? AppColors.onBackgroundDark : AppColors.onBackgroundLight;
-    final Color surfaceBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color primary = isDark
+        ? AppColors.primaryDark
+        : AppColors.primaryLight;
+    final Color secondary = isDark
+        ? AppColors.secondaryDark
+        : AppColors.secondaryLight;
+    final Color onBg = isDark
+        ? AppColors.onBackgroundDark
+        : AppColors.onBackgroundLight;
+    final Color surfaceBg = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF8FAFC);
 
     final bool isWide = size.width >= 900;
 
@@ -146,8 +160,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: isDark
-                      ? [const Color(0xFF0F172A), const Color(0xFF1E1B4B), const Color(0xFF0F172A)]
-                      : [const Color(0xFFEFF6FF), const Color(0xFFF8FAFC), const Color(0xFFEDE9FE)],
+                      ? [
+                          const Color(0xFF0F172A),
+                          const Color(0xFF1E1B4B),
+                          const Color(0xFF0F172A),
+                        ]
+                      : [
+                          const Color(0xFFEFF6FF),
+                          const Color(0xFFF8FAFC),
+                          const Color(0xFFEDE9FE),
+                        ],
                 ),
               ),
             ),
@@ -182,8 +204,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildWideLayout(BuildContext context, Color primary, Color secondary,
-      Color onBg, bool isDark) {
+  Widget _buildWideLayout(
+    BuildContext context,
+    Color primary,
+    Color secondary,
+    Color onBg,
+    bool isDark,
+  ) {
     return Row(
       children: [
         // Left branding panel
@@ -203,7 +230,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: primary.withValues(alpha: 0.08),
-                    border: Border.all(color: primary.withValues(alpha: 0.2), width: 2),
+                    border: Border.all(
+                      color: primary.withValues(alpha: 0.2),
+                      width: 2,
+                    ),
                   ),
                   child: Image.asset(
                     'assets/images/mrcas_logo.png',
@@ -213,13 +243,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Create Your\nMRCAS Account',
-                    style: TextStyle(
-                        fontSize: 36, fontWeight: FontWeight.w900, color: primary, height: 1.2)),
+                Text(
+                  'Create Your\nMRCAS Account',
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    color: primary,
+                    height: 1.2,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Register to access the MRCAS Sports Management portal. All fields marked with * are required.',
-                  style: TextStyle(fontSize: 14, color: onBg.withValues(alpha: 0.6), height: 1.6),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: onBg.withValues(alpha: 0.6),
+                    height: 1.6,
+                  ),
                 ),
                 const SizedBox(height: 40),
                 _buildRoleInfo(primary, secondary, onBg, isDark),
@@ -230,59 +270,112 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // Right form panel
         Expanded(
           flex: 5,
-          child: _buildFormPanel(context, primary, secondary, onBg, isDark, scrolled: true),
+          child: _buildFormPanel(
+            context,
+            primary,
+            secondary,
+            onBg,
+            isDark,
+            scrolled: true,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildNarrowLayout(BuildContext context, Color primary, Color secondary,
-      Color onBg, bool isDark) {
-    return _buildFormPanel(context, primary, secondary, onBg, isDark, scrolled: false);
+  Widget _buildNarrowLayout(
+    BuildContext context,
+    Color primary,
+    Color secondary,
+    Color onBg,
+    bool isDark,
+  ) {
+    return _buildFormPanel(
+      context,
+      primary,
+      secondary,
+      onBg,
+      isDark,
+      scrolled: false,
+    );
   }
 
-  Widget _buildRoleInfo(Color primary, Color secondary, Color onBg, bool isDark) {
+  Widget _buildRoleInfo(
+    Color primary,
+    Color secondary,
+    Color onBg,
+    bool isDark,
+  ) {
     final roles = [
-      (Icons.school_rounded, 'Student', 'Access sports calendars, equipment, and achievements', primary),
-      (Icons.sports_rounded, 'Sports Staff', 'Manage students, attendance, and equipment', secondary),
+      (
+        Icons.school_rounded,
+        'Student',
+        'Access sports calendars, equipment, and achievements',
+        primary,
+      ),
+      (
+        Icons.sports_rounded,
+        'Sports Staff',
+        'Manage students, attendance, and equipment',
+        secondary,
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: roles
-          .map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                          shape: BoxShape.circle, color: r.$4.withValues(alpha: 0.1)),
-                      child: Icon(r.$1, size: 18, color: r.$4),
+          .map(
+            (r) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: r.$4.withValues(alpha: 0.1),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(r.$2,
-                              style: TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.bold, color: r.$4)),
-                          Text(r.$3,
-                              style: TextStyle(
-                                  fontSize: 11, color: onBg.withValues(alpha: 0.55))),
-                        ],
-                      ),
+                    child: Icon(r.$1, size: 18, color: r.$4),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          r.$2,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: r.$4,
+                          ),
+                        ),
+                        Text(
+                          r.$3,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: onBg.withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ))
+                  ),
+                ],
+              ),
+            ),
+          )
           .toList(),
     );
   }
 
-  Widget _buildFormPanel(BuildContext context, Color primary, Color secondary,
-      Color onBg, bool isDark, {required bool scrolled}) {
+  Widget _buildFormPanel(
+    BuildContext context,
+    Color primary,
+    Color secondary,
+    Color onBg,
+    bool isDark, {
+    required bool scrolled,
+  }) {
     final content = Consumer<AuthProvider>(
       builder: (context, auth, _) {
         return Form(
@@ -294,12 +387,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 8),
                 _BackButton(onBg: onBg),
                 const SizedBox(height: 20),
-                Text('Create Account',
-                    style: TextStyle(
-                        fontSize: 28, fontWeight: FontWeight.w900, color: primary)),
+                Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: primary,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                Text('Fill in the details below to register',
-                    style: TextStyle(fontSize: 13, color: onBg.withValues(alpha: 0.55))),
+                Text(
+                  'Fill in the details below to register',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: onBg.withValues(alpha: 0.55),
+                  ),
+                ),
                 const SizedBox(height: 24),
               ] else ...[
                 const SizedBox(height: 48),
@@ -338,7 +441,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 onBg: onBg,
                 isDark: isDark,
                 validator: (val) {
-                  if (val == null || !RegExp(r'^[\w.-]+@[\w.-]+\.\w+$').hasMatch(val.trim())) {
+                  if (val == null ||
+                      !RegExp(r'^[\w.-]+@[\w.-]+\.\w+$').hasMatch(val.trim())) {
                     return 'Enter a valid email address';
                   }
                   return null;
@@ -422,7 +526,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 obscure: _obscurePassword,
                 onBg: onBg,
                 isDark: isDark,
-                onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                onToggle: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
                 validator: (val) {
                   if (val == null || !_isPasswordStrong(val)) {
                     return 'Use 8+ chars with uppercase, lowercase, number & symbol';
@@ -447,9 +552,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 obscure: _obscureConfirm,
                 onBg: onBg,
                 isDark: isDark,
-                onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                onToggle: () =>
+                    setState(() => _obscureConfirm = !_obscureConfirm),
                 validator: (val) {
-                  if (val != _passwordCtrl.text) return 'Passwords do not match';
+                  if (val != _passwordCtrl.text)
+                    return 'Passwords do not match';
                   return null;
                 },
               ),
@@ -465,8 +572,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     height: 22,
                     child: Checkbox(
                       value: _acceptedTerms,
-                      onChanged: (val) => setState(() => _acceptedTerms = val ?? false),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      onChanged: (val) =>
+                          setState(() => _acceptedTerms = val ?? false),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -474,7 +584,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: Text(
                       'I confirm that the information provided is accurate and I accept the MRCAS Sports Portal Terms of Use and Privacy Policy.',
                       style: TextStyle(
-                          fontSize: 12, color: onBg.withValues(alpha: 0.65), height: 1.5),
+                        fontSize: 12,
+                        color: onBg.withValues(alpha: 0.65),
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -483,22 +596,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 24),
 
               // ── Error display ─────────────────────────────────────────────
-              if (auth.errorMessage != null && auth.errorMessage!.isNotEmpty) ...[
+              if (auth.errorMessage != null &&
+                  auth.errorMessage!.isNotEmpty) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.redAccent,
+                        size: 18,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           auth.errorMessage!,
-                          style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -517,7 +640,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     backgroundColor: primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   child: auth.isLoading
                       ? const SizedBox(
@@ -530,7 +655,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         )
                       : const Text(
                           'Create Account',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
@@ -545,12 +673,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: RichText(
                     text: TextSpan(
                       text: 'Already have an account? ',
-                      style: TextStyle(color: onBg.withValues(alpha: 0.55), fontSize: 13),
+                      style: TextStyle(
+                        color: onBg.withValues(alpha: 0.55),
+                        fontSize: 13,
+                      ),
                       children: [
                         TextSpan(
                           text: 'Login',
                           style: TextStyle(
-                              color: primary, fontWeight: FontWeight.bold, fontSize: 13),
+                            color: primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -576,12 +710,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildRoleSelector(Color primary, Color secondary, Color onBg, bool isDark) {
+  Widget _buildRoleSelector(
+    Color primary,
+    Color secondary,
+    Color onBg,
+    bool isDark,
+  ) {
     return Row(
       children: _roles.map((role) {
         final isSelected = _selectedRole == role;
         final color = role == 'Student' ? primary : secondary;
-        final icon = role == 'Student' ? Icons.school_rounded : Icons.sports_rounded;
+        final icon = role == 'Student'
+            ? Icons.school_rounded
+            : Icons.sports_rounded;
         return Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -589,29 +730,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
               onTap: () => setState(() => _selectedRole = role),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? color.withValues(alpha: 0.10)
                       : (isDark
-                          ? Colors.white.withValues(alpha: 0.03)
-                          : Colors.black.withValues(alpha: 0.02)),
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : Colors.black.withValues(alpha: 0.02)),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? color.withValues(alpha: 0.5) : onBg.withValues(alpha: 0.12),
+                    color: isSelected
+                        ? color.withValues(alpha: 0.5)
+                        : onBg.withValues(alpha: 0.12),
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(icon, size: 18, color: isSelected ? color : onBg.withValues(alpha: 0.5)),
+                    Icon(
+                      icon,
+                      size: 18,
+                      color: isSelected ? color : onBg.withValues(alpha: 0.5),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       role,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         color: isSelected ? color : onBg.withValues(alpha: 0.7),
                       ),
                     ),
@@ -647,7 +799,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         hintText: hint,
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -672,11 +827,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
         labelText: label,
         prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
         suffixIcon: IconButton(
-          icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+          icon: Icon(
+            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            size: 20,
+          ),
           onPressed: onToggle,
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -698,11 +859,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
       ),
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .toList(),
       onChanged: onChanged,
-      validator: (val) => val == null || val.isEmpty ? 'Please select $label' : null,
+      validator: (val) =>
+          val == null || val.isEmpty ? 'Please select $label' : null,
     );
   }
 }
@@ -718,7 +885,11 @@ class _BackButton extends StatelessWidget {
     return TextButton.icon(
       key: const Key('btn_back_signup'),
       onPressed: () => context.go('/welcome'),
-      icon: Icon(Icons.arrow_back_rounded, size: 18, color: onBg.withValues(alpha: 0.6)),
+      icon: Icon(
+        Icons.arrow_back_rounded,
+        size: 18,
+        color: onBg.withValues(alpha: 0.6),
+      ),
       label: Text(
         'Back',
         style: TextStyle(color: onBg.withValues(alpha: 0.6), fontSize: 13),
@@ -797,7 +968,11 @@ class _PasswordStrengthBar extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           label,
-          style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 11,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );

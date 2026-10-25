@@ -131,6 +131,12 @@ class _AdminSidebarState extends State<AdminSidebar> {
                 _buildMenuItem(context, 'Sports Equipment', Icons.sports_soccer_rounded),
                 _buildMenuItem(context, 'Achievements', Icons.emoji_events_rounded),
                 _buildMenuItem(context, 'Sports Calendar', Icons.event_note_rounded),
+                if (AppRoles.canManageTrainingSessions(role))
+                  _buildMenuItem(
+                    context,
+                    'Training Schedule',
+                    Icons.fitness_center_rounded,
+                  ),
                 _buildMenuItem(context, 'Gallery', Icons.photo_library_rounded),
                 if (canViewReports)
                   _buildMenuItem(context, 'Reports', Icons.analytics_rounded),

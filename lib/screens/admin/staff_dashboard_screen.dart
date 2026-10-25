@@ -21,6 +21,7 @@ import 'widgets/report_management_view.dart';
 import 'widgets/notification_management_view.dart';
 import 'widgets/quick_actions.dart';
 import '../teams/team_management_screen.dart';
+import '../user/widgets/training_schedule_view.dart';
 
 class StaffDashboardScreen extends StatefulWidget {
   const StaffDashboardScreen({super.key});
@@ -279,6 +280,12 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         return const Padding(
           padding: EdgeInsets.all(24.0),
           child: EventManagementView(),
+        );
+      }
+      if (_activeTab == 'Training Schedule') {
+        return const SingleChildScrollView(
+          padding: EdgeInsets.all(24),
+          child: TrainingScheduleView(readOnly: false),
         );
       }
       if (_activeTab == 'Gallery') {

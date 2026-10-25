@@ -15,6 +15,7 @@ void main() {
       expect(AppRoles.canManageStudents(AppRoles.manager), isTrue);
       expect(AppRoles.canManageAttendance(AppRoles.manager), isTrue);
       expect(AppRoles.canManageEvents(AppRoles.manager), isTrue);
+      expect(AppRoles.canManageTrainingSessions(AppRoles.manager), isTrue);
       expect(AppRoles.canManageGallery(AppRoles.manager), isTrue);
       expect(AppRoles.canManageEquipmentInventory(AppRoles.manager), isTrue);
       expect(AppRoles.canViewReports(AppRoles.manager), isTrue);
@@ -40,6 +41,10 @@ void main() {
       expect(AppRoles.canAccessOperationsPortal(AppRoles.sportsStaff), isTrue);
       expect(AppRoles.canManageAttendance(AppRoles.sportsStaff), isTrue);
       expect(AppRoles.canManageEvents(AppRoles.sportsStaff), isTrue);
+      expect(
+        AppRoles.canManageTrainingSessions(AppRoles.sportsStaff),
+        isTrue,
+      );
       expect(AppRoles.canManageGallery(AppRoles.sportsStaff), isTrue);
       expect(AppRoles.canManageEquipmentLoans(AppRoles.sportsStaff), isTrue);
       expect(AppRoles.canManageStudents(AppRoles.sportsStaff), isFalse);
@@ -93,6 +98,10 @@ void main() {
       );
       expect(AppRoles.canOpenOperationsTab(AppRoles.manager, 'Reports'), isTrue);
       expect(
+        AppRoles.canOpenOperationsTab(AppRoles.manager, 'Training Schedule'),
+        isTrue,
+      );
+      expect(
         AppRoles.canOpenOperationsTab(AppRoles.manager, 'Notifications'),
         isTrue,
       );
@@ -122,6 +131,17 @@ void main() {
       expect(
         AppRoles.canOpenOperationsTab(AppRoles.sportsStaff, 'Reports'),
         isFalse,
+      );
+      expect(
+        AppRoles.canOpenOperationsTab(
+          AppRoles.sportsStaff,
+          'Training Schedule',
+        ),
+        isTrue,
+      );
+      expect(
+        AppRoles.canOpenOperationsTab(AppRoles.student, 'Training Schedule'),
+        isTrue,
       );
       expect(
         AppRoles.canOpenOperationsTab(AppRoles.sportsStaff, 'Notifications'),

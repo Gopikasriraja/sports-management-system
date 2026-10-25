@@ -14,6 +14,7 @@ import 'providers/notification_provider.dart';
 import 'providers/report_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/team_provider.dart';
+import 'providers/training_session_provider.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -142,6 +143,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<TeamProvider>(
           create: (_) =>
               TeamProvider(listenToRealtimeUpdates: enableRealtimeUpdates),
+        ),
+        ChangeNotifierProvider<TrainingSessionProvider>(
+          create: (_) => TrainingSessionProvider(
+            listenToRealtimeUpdates: enableRealtimeUpdates,
+          ),
         ),
       ],
       child: Consumer<ThemeProvider>(
